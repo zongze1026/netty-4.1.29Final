@@ -25,6 +25,7 @@ public class ReflectiveChannelFactory<T extends Channel> implements ChannelFacto
 
     private final Class<? extends T> clazz;
 
+    //把需要创建的channel的class对象传入，到时后通过该工厂反射创建通道
     public ReflectiveChannelFactory(Class<? extends T> clazz) {
         if (clazz == null) {
             throw new NullPointerException("clazz");

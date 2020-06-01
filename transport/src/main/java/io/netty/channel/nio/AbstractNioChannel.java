@@ -82,10 +82,10 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         super(parent);
-        this.ch = ch;
-        this.readInterestOp = readInterestOp;
+        this.ch = ch; //保存serverSocketChannel
+        this.readInterestOp = readInterestOp; //保存兴趣集
         try {
-            ch.configureBlocking(false);
+            ch.configureBlocking(false); //设置非阻塞
         } catch (IOException e) {
             try {
                 ch.close();

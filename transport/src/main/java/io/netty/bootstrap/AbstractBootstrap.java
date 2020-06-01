@@ -317,6 +317,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            //通过工厂反射创建对象；调用bootStrap中设置的通道的空参构造
             channel = channelFactory.newChannel();
             init(channel);
         } catch (Throwable t) {
