@@ -25,6 +25,7 @@ public class NettyServer {
         try {
             bootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)    //把NioServerSocketChannel作为服务器通道的实现
+                    .handler(new NettyServerTaskHandler())
                     .option(ChannelOption.SO_BACKLOG, 128) //初始化服务器连接队列的大小;高并发下服务器会将处理不过来的链接放入队列
                     .childOption(ChannelOption.SO_KEEPALIVE, true)     //设置保持活动连接状态
                     .childHandler(new ChannelInitializer<SocketChannel>() {      //给workerGroup设置我们自己定义的处理器

@@ -169,8 +169,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         }
 
         //服务端通过匿名内部类的形式重写了ChannelInitializer的init方法
-        //首先判断外部有没有设置handler，如果有就添加到pipeline中
-        //添加一个接收器ServerBootstrapAcceptor
+        //首先判断外部有没有设置handler，如果有就添加到pipeline中；然后添加一个接收器ServerBootstrapAcceptor
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) throws Exception {
@@ -181,6 +180,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                     pipeline.addLast(handler);
                 }
 
+                //这里采用异步的形式去添加ServerBootstrapAcceptor到pipeline中，主线程在这里返回
+                //后去执行register操作，将通道绑定在selectors上
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {

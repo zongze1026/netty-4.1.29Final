@@ -51,4 +51,8 @@ public class NettyServerTaskHandler extends ChannelInboundHandlerAdapter {
     }
 
 
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("channelHandler is add");
+    }
 }

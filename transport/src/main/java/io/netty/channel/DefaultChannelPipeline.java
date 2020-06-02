@@ -76,16 +76,22 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     /**
      * This is the head of a linked list that is processed by {@link #callHandlerAddedForAllHandlers()} and so process
      * all the pending {@link #callHandlerAdded0(AbstractChannelHandlerContext)}.
+     * 这是一个保留有head节点的单向链表，当{@link callHandlerAddedForAllHandlers()}方法被调用的时候就会处理链表中所有
+     * 的节点；并且调用他们的{@link callHandlerAdded0()}方法
      *
      * We only keep the head because it is expected that the list is used infrequently and its size is small.
      * Thus full iterations to do insertions is assumed to be a good compromised to saving memory and tail management
      * complexity.
+     * 我们仅仅保留头部节点是因为可以预料到该链表很少被使用，并且长度非常小
+     *
      */
     private PendingHandlerCallback pendingHandlerCallbackHead;
 
     /**
      * Set to {@code true} once the {@link AbstractChannel} is registered.Once set to {@code true} the value will never
      * change.
+     *
+     * 当通道被注册到一个EventLoop中的话，该属性为true,并且不会再被改变
      */
     private boolean registered;
 
@@ -210,6 +216,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         synchronized (this) {
             checkMultiplicity(handler);
 
+            //将handler封装成DefaultChannelHandlerContext对象添加到pipeline的链中
             newCtx = newContext(group, filterName(name, handler), handler);
 
             //添加到pipeline的双向链中，并且位置是倒数第二个节点
@@ -218,8 +225,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             // If the registered is false it means that the channel was not registered on an eventloop yet.
             // In this case we add the context to the pipeline and add a task that will call
             // ChannelHandler.handlerAdded(...) once the channel is registered.
+            //如果通道还没有被注册的话，就把当前的handler封装成任务，添加到任务链的尾部
             if (!registered) {
                 newCtx.setAddPending();
+                //添加到任务链的尾部
                 callHandlerCallbackLater(newCtx, true);
                 return this;
             }
@@ -1164,17 +1173,23 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         // holding the lock and so produce a deadlock if handlerAdded(...) will try to add another handler from outside
         // the EventLoop.
         PendingHandlerCallback task = pendingHandlerCallbackHead;
+        //通过head任务执行整条的任务链
         while (task != null) {
             task.execute();
             task = task.next;
         }
     }
 
+
     private void callHandlerCallbackLater(AbstractChannelHandlerContext ctx, boolean added) {
         assert !registered;
 
+        //added该属性标记是否是添加handler,根据不同的值来确定是创建PendingHandlerAddedTask还是PendingHandlerRemovedTask
+        //相应的也就会执行handler中对应的handlerAdded和handlerRemoved方法
         PendingHandlerCallback task = added ? new PendingHandlerAddedTask(ctx) : new PendingHandlerRemovedTask(ctx);
+        //获取头任务
         PendingHandlerCallback pending = pendingHandlerCallbackHead;
+        //如果头任务为空则当前任务作为头任务，否则找到尾部任务并添加到该任务的后面
         if (pending == null) {
             pendingHandlerCallbackHead = task;
         } else {
