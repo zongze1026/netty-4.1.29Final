@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * {@link Bootstrap} sub-class which allows easy bootstrap of {@link ServerChannel}
- *
  */
 public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerChannel> {
 
@@ -50,7 +49,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     private volatile EventLoopGroup childGroup;
     private volatile ChannelHandler childHandler;
 
-    public ServerBootstrap() { }
+    public ServerBootstrap() {
+    }
 
     private ServerBootstrap(ServerBootstrap bootstrap) {
         super(bootstrap);
@@ -148,7 +148,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         final Map<AttributeKey<?>, Object> attrs = attrs0();
         //配置属性
         synchronized (attrs) {
-            for (Entry<AttributeKey<?>, Object> e: attrs.entrySet()) {
+            for (Entry<AttributeKey<?>, Object> e : attrs.entrySet()) {
                 @SuppressWarnings("unchecked")
                 AttributeKey<Object> key = (AttributeKey<Object>) e.getKey();
                 channel.attr(key).set(e.getValue());
@@ -168,11 +168,15 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             currentChildAttrs = childAttrs.entrySet().toArray(newAttrArray(0));
         }
 
+        //服务端通过匿名内部类的形式重写了ChannelInitializer的init方法
+        //首先判断外部有没有设置handler，如果有就添加到pipeline中
+        //添加一个接收器ServerBootstrapAcceptor
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
                 ChannelHandler handler = config.handler();
+                //如果外部配置的handler不为空，则添加到pipeline中
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
@@ -180,7 +184,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
-                        //往pipeline添加一个入站类型的接收器
+                        //往pipeline添加一个入站类型的接收器；该接收器继承了ChannelInboundHandlerAdapter
+                        //并且重写了channelRead方法，该方法做了两件事：
+                        // 1.把外部设置的childHandler添加到pipeline中
+                        // 2.把接受到的客户端通道NioSocketChannel绑定到workerGroup中的某一个EventLoop中
                         pipeline.addLast(new ServerBootstrapAcceptor(
                                 ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
                     }
@@ -246,14 +253,18 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             final Channel child = (Channel) msg;
 
+            //初始化处理器
             child.pipeline().addLast(childHandler);
 
+            //设置通道的参数
             setChannelOptions(child, childOptions, logger);
 
-            for (Entry<AttributeKey<?>, Object> e: childAttrs) {
+            //设置属性
+            for (Entry<AttributeKey<?>, Object> e : childAttrs) {
                 child.attr((AttributeKey<Object>) e.getKey()).set(e.getValue());
             }
 
+            //注册到workerGroup中去,并绑定到一个eventLoop中去
             try {
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override

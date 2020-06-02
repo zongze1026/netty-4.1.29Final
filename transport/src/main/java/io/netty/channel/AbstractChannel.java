@@ -65,6 +65,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     private volatile SocketAddress localAddress;
     private volatile SocketAddress remoteAddress;
     private volatile EventLoop eventLoop;
+    //该属性标识该通道是否已经被注册
     private volatile boolean registered;
     private boolean closeInitiated;
 
@@ -471,6 +472,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            //把eventLoop绑定到通道上了
             AbstractChannel.this.eventLoop = eventLoop;
 
             if (eventLoop.inEventLoop()) {
@@ -502,6 +504,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                //这里就是将channel和selector关联起来的入口
                 doRegister();
                 neverRegistered = false;
                 registered = true;
@@ -556,6 +559,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             boolean wasActive = isActive();
             try {
+                //绑定端口
                 doBind(localAddress);
             } catch (Throwable t) {
                 safeSetFailure(promise, t);
@@ -563,6 +567,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            //当端口绑定成功后，会激活通道
             if (!wasActive && isActive()) {
                 invokeLater(new Runnable() {
                     @Override

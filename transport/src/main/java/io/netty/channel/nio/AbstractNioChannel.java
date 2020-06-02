@@ -251,6 +251,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                 }
 
                 boolean wasActive = isActive();
+                //调用该方法连接服务端
                 if (doConnect(remoteAddress, localAddress)) {
                     fulfillConnectPromise(promise, wasActive);
                 } else {
@@ -383,6 +384,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+                //由之前channel初始化可以得知javaChannel()返回的正式没有封装过的nio里的channel
+                //将channel注册到selector上，并且把当前的channel当做attachment
+                //由之前可知channel已经关联了EventLoop，现在channel又注册到了selector上了，这时通道的注册已经完成
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
             } catch (CancelledKeyException e) {

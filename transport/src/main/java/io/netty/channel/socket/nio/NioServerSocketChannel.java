@@ -52,6 +52,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioServerSocketChannel.class);
 
+    //创建客户端的通道，类型是SocketChannel
     private static ServerSocketChannel newSocket(SelectorProvider provider) {
         try {
             /**
@@ -130,6 +131,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
         if (PlatformDependent.javaVersion() >= 7) {
+            //直接调用nio中的ServerSocketChannel来绑定端口
             javaChannel().bind(localAddress, config.getBacklog());
         } else {
             javaChannel().socket().bind(localAddress, config.getBacklog());
@@ -141,12 +143,20 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         javaChannel().close();
     }
 
+
+    /**
+     * 由之前分析可得知，NioServerSocketChannel注册的感兴趣的事件是{@link SelectionKey.accept}
+     * 当服务端启动并且当有链接进来的时候，该方法就会被调用
+     */
     @Override
     protected int doReadMessages(List<Object> buf) throws Exception {
+        //这里获取到的是客户端的channel（SocketChannel）
         SocketChannel ch = SocketUtils.accept(javaChannel());
 
         try {
             if (ch != null) {
+                //针对nio的channel进行封装成NioSocketChannel返回
+                //这里的this就是NoiServerSocketChannel
                 buf.add(new NioSocketChannel(this, ch));
                 return 1;
             }

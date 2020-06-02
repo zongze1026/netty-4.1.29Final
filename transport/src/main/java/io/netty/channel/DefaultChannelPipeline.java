@@ -90,13 +90,16 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private boolean registered;
 
     protected DefaultChannelPipeline(Channel channel) {
+        //先检查传进来的channel非空，并把channel和pipeline关联起来
         this.channel = ObjectUtil.checkNotNull(channel, "channel");
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
 
+        //以下是初始化pipeline中的头尾节点
         tail = new TailContext(this);
         head = new HeadContext(this);
 
+        //可以看到pipeline其实是双向链表
         head.next = tail;
         tail.prev = head;
     }
@@ -209,6 +212,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
             newCtx = newContext(group, filterName(name, handler), handler);
 
+            //添加到pipeline的双向链中，并且位置是倒数第二个节点
             addLast0(newCtx);
 
             // If the registered is false it means that the channel was not registered on an eventloop yet.
@@ -236,6 +240,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return this;
     }
 
+    /**
+     * 此方法可以看出，新的handler实际上时添加到pipeline中的倒数第二个节点
+     */
     private void addLast0(AbstractChannelHandlerContext newCtx) {
         AbstractChannelHandlerContext prev = tail.prev;
         newCtx.prev = prev;
@@ -1265,9 +1272,14 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     // A special catch-all handler that handles both bytes and messages.
+    /**
+     * 可以看到尾节点是一个入站类型的处理器，实现了{@link ChannelInboundHandler}
+     */
     final class TailContext extends AbstractChannelHandlerContext implements ChannelInboundHandler {
 
         TailContext(DefaultChannelPipeline pipeline) {
+            //关联pipeline、inbound、outbound等熟悉
+            //可以看到尾节点的inbound为true，而outbound为false；那么可想而知头结点刚好相反
             super(pipeline, null, TAIL_NAME, true, false);
             setAddComplete();
         }
@@ -1325,13 +1337,19 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
+
+    /**
+     * 头结点同时具备出站和入站两种特性，它同时实现了{@link ChannelOutboundHandler}和{@link ChannelInboundHandler}
+     */
     final class HeadContext extends AbstractChannelHandlerContext
             implements ChannelOutboundHandler, ChannelInboundHandler {
 
         private final Unsafe unsafe;
 
+        //设置属性
         HeadContext(DefaultChannelPipeline pipeline) {
             super(pipeline, null, HEAD_NAME, false, true);
+            //unsafe该属性作用：它封装了对 Java 底层 Socket 的操作, 因此实际上是沟通 Netty 上层和 Java 底层的重要的桥梁
             unsafe = pipeline.channel().unsafe();
             setAddComplete();
         }
@@ -1363,6 +1381,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 ChannelHandlerContext ctx,
                 SocketAddress remoteAddress, SocketAddress localAddress,
                 ChannelPromise promise) throws Exception {
+            //最终还是调用unsafe的connect方法
             unsafe.connect(remoteAddress, localAddress, promise);
         }
 

@@ -37,6 +37,7 @@ public interface EventExecutor extends EventExecutorGroup {
 
     /**
      * Calls {@link #inEventLoop(Thread)} with {@link Thread#currentThread()} as argument
+     * 暂时理解该线程是否启动
      */
     boolean inEventLoop();
 

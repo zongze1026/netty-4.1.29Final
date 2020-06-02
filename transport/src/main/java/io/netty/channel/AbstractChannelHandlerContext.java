@@ -524,6 +524,7 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
             return promise;
         }
 
+        //找到的出站节点正是head节点
         final AbstractChannelHandlerContext next = findContextOutbound();
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
@@ -532,6 +533,7 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
             safeExecute(executor, new Runnable() {
                 @Override
                 public void run() {
+                    //执行head节点的invokeConnect方法
                     next.invokeConnect(remoteAddress, localAddress, promise);
                 }
             }, promise, null);
@@ -931,7 +933,9 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
         return false;
     }
 
+    //从头结点开始寻找下一个入站节点
     private AbstractChannelHandlerContext findContextInbound() {
+        //当前节点为head结点
         AbstractChannelHandlerContext ctx = this;
         do {
             ctx = ctx.next;
@@ -939,7 +943,9 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
         return ctx;
     }
 
+    //从尾节点开始寻找第一个出站的节点
     private AbstractChannelHandlerContext findContextOutbound() {
+        //当前节点时tail节点
         AbstractChannelHandlerContext ctx = this;
         do {
             ctx = ctx.prev;

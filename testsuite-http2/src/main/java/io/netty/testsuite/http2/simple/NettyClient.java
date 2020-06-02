@@ -24,12 +24,7 @@ public class NettyClient {
         try {
             bootstrap.group(eventLoopGroup)
                     .channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            socketChannel.pipeline().addLast(new NettyClientHandler());
-                        }
-                    });
+                    .handler(new HttpChannelInitializer());
 
             ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 8888).sync();
             channelFuture.channel().closeFuture().sync();

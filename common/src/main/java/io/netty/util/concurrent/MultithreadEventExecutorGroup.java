@@ -34,6 +34,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     private final Set<EventExecutor> readonlyChildren;
     private final AtomicInteger terminatedChildren = new AtomicInteger();
     private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);
+    //该选择器用于挑选一个EventLoop来执行任务
     private final EventExecutorChooserFactory.EventExecutorChooser chooser;
 
     /**
@@ -76,6 +77,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
 
+        //通过外部传入的线程数量初始化线程数组的大小；也就是线程池
         children = new EventExecutor[nThreads];
 
         for (int i = 0; i < nThreads; i ++) {
