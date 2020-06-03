@@ -168,8 +168,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             currentChildAttrs = childAttrs.entrySet().toArray(newAttrArray(0));
         }
 
-        //服务端通过匿名内部类的形式重写了ChannelInitializer的init方法
-        //首先判断外部有没有设置handler，如果有就添加到pipeline中；然后添加一个接收器ServerBootstrapAcceptor
+        //1.服务端通过匿名内部类的形式重写了ChannelInitializer的init方法
+        //2.ChannelInitializer是一个特殊的入栈处理器，initChannel会在handleAdded中被调用；
+        //而handleAdded方法正是在channel注册时触发
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) throws Exception {
@@ -180,8 +181,6 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                     pipeline.addLast(handler);
                 }
 
-                //这里采用异步的形式去添加ServerBootstrapAcceptor到pipeline中，主线程在这里返回
-                //后去执行register操作，将通道绑定在selectors上
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
@@ -254,7 +253,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             final Channel child = (Channel) msg;
 
-            //初始化处理器
+            //1.ServerBootstrapAcceptor处理的是接收进来的连接SocketChannel
+            //2.这里就是把之前配置的childHandler添加到pipeline中去，实际上这个childHandler的类型
+            //是ChannelInitializer，在通道注册的时候会执行handlerAdded方法来初始化pipeline中的处理器
             child.pipeline().addLast(childHandler);
 
             //设置通道的参数
