@@ -189,6 +189,8 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
 
     @Override
     public ChannelHandlerContext fireChannelActive() {
+        //1.从头结点开始寻找下一个入站的handler并执行ChannelActive
+        //2.直到事件传递到尾结点结束；如果传递过程中有handler没有将事件继续传递也同样结束
         invokeChannelActive(findContextInbound());
         return this;
     }

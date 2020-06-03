@@ -251,7 +251,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                 }
 
                 boolean wasActive = isActive();
-                //调用该方法连接服务端
+                //调用该方法连接服务端;connect是一个出站事件
                 if (doConnect(remoteAddress, localAddress)) {
                     fulfillConnectPromise(promise, wasActive);
                 } else {
@@ -309,6 +309,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             // Regardless if the connection attempt was cancelled, channelActive() event should be triggered,
             // because what happened is what happened.
             if (!wasActive && active) {
+                //1.连接服务器端成功，这里开始调用pipeline的fireChannelActive()方法来传播ChannelActive事件;该事件是一个入站事件
+                //2.入站事件的流向是从头节点开始到尾结点结束
+                //3.可想而知fireChannelActive()正是从头结点开始传递事件
                 pipeline().fireChannelActive();
             }
 
