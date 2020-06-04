@@ -331,6 +331,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
+        //该register方法干了两件事情：
+        //1.将channel绑定到一个eventLoop上
+        //2.将channel注册到selector上
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {

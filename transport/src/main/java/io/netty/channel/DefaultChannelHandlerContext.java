@@ -23,6 +23,7 @@ final class DefaultChannelHandlerContext extends AbstractChannelHandlerContext {
 
     DefaultChannelHandlerContext(
             DefaultChannelPipeline pipeline, EventExecutor executor, String name, ChannelHandler handler) {
+        //这里通过isInbound和isOutbound方法来判断是入站还是出站类型的handler
         super(pipeline, executor, name, isInbound(handler), isOutbound(handler));
         if (handler == null) {
             throw new NullPointerException("handler");

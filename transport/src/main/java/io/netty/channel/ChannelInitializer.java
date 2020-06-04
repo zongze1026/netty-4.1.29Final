@@ -104,6 +104,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
             // The good thing about calling initChannel(...) in handlerAdded(...) is that there will be no ordering
             // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
             // will be added in the expected order.
+            //ChannelInitializer通过这里调用initChannel方法
             initChannel(ctx);
         }
     }
@@ -112,12 +113,15 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
     private boolean initChannel(ChannelHandlerContext ctx) throws Exception {
         if (initMap.putIfAbsent(ctx, Boolean.TRUE) == null) { // Guard against re-entrance.
             try {
+                //调用子类的initChannel方法
                 initChannel((C) ctx.channel());
             } catch (Throwable cause) {
                 // Explicitly call exceptionCaught(...) as we removed the handler before calling initChannel(...).
                 // We do so to prevent multiple calls to initChannel(...).
                 exceptionCaught(ctx, cause);
             } finally {
+                //移除当前的ChannelHandlerContext也就是ChannelInitializer类型的handler；其目的是添加initChannel方法内部的handler
+                //当initChannel方法执行完毕，删除该ChannelHandlerContext
                 remove(ctx);
             }
             return true;
