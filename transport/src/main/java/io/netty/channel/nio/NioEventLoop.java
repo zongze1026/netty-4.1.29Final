@@ -389,6 +389,36 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+
+
+
+    // 'wakenUp.compareAndSet(false, true)' is always evaluated
+    // before calling 'selector.wakeup()' to reduce the wake-up
+    // overhead. (Selector.wakeup() is an expensive operation.)
+    //
+    // However, there is a race condition in this approach.
+    // The race condition is triggered when 'wakenUp' is set to
+    // true too early.
+    //
+    // 'wakenUp' is set to true too early if:
+    // 1) Selector is waken up between 'wakenUp.set(false)' and
+    //    'selector.select(...)'. (BAD)
+    // 2) Selector is waken up between 'selector.select(...)' and
+    //    'if (wakenUp.get()) { ... }'. (OK)
+    //
+    // In the first case, 'wakenUp' is set to true and the
+    // following 'selector.select(...)' will wake up immediately.
+    // Until 'wakenUp' is set to false again in the next round,
+    // 'wakenUp.compareAndSet(false, true)' will fail, and therefore
+    // any attempt to wake up the Selector will fail, too, causing
+    // the following 'selector.select(...)' call to block
+    // unnecessarily.
+    //
+    // To fix this problem, we wake up the selector again if wakenUp
+    // is true immediately after selector.select(...).
+    // It is inefficient in that it wakes up the selector for both
+    // the first case (BAD - wake-up required) and the second case
+    // (OK - no wake-up required).
     @Override
     protected void run() {
         for (;;) {
@@ -399,33 +429,6 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     case SelectStrategy.SELECT:
                         select(wakenUp.getAndSet(false));
 
-                        // 'wakenUp.compareAndSet(false, true)' is always evaluated
-                        // before calling 'selector.wakeup()' to reduce the wake-up
-                        // overhead. (Selector.wakeup() is an expensive operation.)
-                        //
-                        // However, there is a race condition in this approach.
-                        // The race condition is triggered when 'wakenUp' is set to
-                        // true too early.
-                        //
-                        // 'wakenUp' is set to true too early if:
-                        // 1) Selector is waken up between 'wakenUp.set(false)' and
-                        //    'selector.select(...)'. (BAD)
-                        // 2) Selector is waken up between 'selector.select(...)' and
-                        //    'if (wakenUp.get()) { ... }'. (OK)
-                        //
-                        // In the first case, 'wakenUp' is set to true and the
-                        // following 'selector.select(...)' will wake up immediately.
-                        // Until 'wakenUp' is set to false again in the next round,
-                        // 'wakenUp.compareAndSet(false, true)' will fail, and therefore
-                        // any attempt to wake up the Selector will fail, too, causing
-                        // the following 'selector.select(...)' call to block
-                        // unnecessarily.
-                        //
-                        // To fix this problem, we wake up the selector again if wakenUp
-                        // is true immediately after selector.select(...).
-                        // It is inefficient in that it wakes up the selector for both
-                        // the first case (BAD - wake-up required) and the second case
-                        // (OK - no wake-up required).
 
                         if (wakenUp.get()) {
                             selector.wakeup();
@@ -451,6 +454,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     } finally {
                         // Ensure we always run tasks.
                         final long ioTime = System.nanoTime() - ioStartTime;
+                        //1.通过给定的时间执行任务队列里的任务；有趣的是（ioTime * (100 - ioRatio) / ioRatio）其中ioRatio为50是不变的;
+                        //那么表达式结果的时间刚好是线程执行io操作的时间，所有netty默认分配给io时间和执行任务的时间是相同的
                         runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
                     }
                 }

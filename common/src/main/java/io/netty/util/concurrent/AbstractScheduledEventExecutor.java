@@ -102,12 +102,15 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         assert inEventLoop();
 
         Queue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
+        //从延时队列里抓取一个任务
         ScheduledFutureTask<?> scheduledTask = scheduledTaskQueue == null ? null : scheduledTaskQueue.peek();
         if (scheduledTask == null) {
             return null;
         }
 
+        //nanoTime为当前时间，如果延时时间小于或者等于当前时间，说明该任务已经到时间执行了
         if (scheduledTask.deadlineNanos() <= nanoTime) {
+            //从延时队列中移除该任务
             scheduledTaskQueue.remove();
             return scheduledTask;
         }

@@ -273,9 +273,12 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private boolean fetchFromScheduledTaskQueue() {
         long nanoTime = AbstractScheduledEventExecutor.nanoTime();
         Runnable scheduledTask  = pollScheduledTask(nanoTime);
+        //在一定的时间内不断地从延时队列中抓取任务放到任务队列中
         while (scheduledTask != null) {
+            //把延时队列里的任务添加到执行队列(taskQueue)中
             if (!taskQueue.offer(scheduledTask)) {
                 // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
+                //如果任务队列中没有剩余空间，将其添加回延时队列，以便我们再次获取它
                 scheduledTaskQueue().add((ScheduledFutureTask<?>) scheduledTask);
                 return false;
             }
@@ -390,6 +393,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
      */
     protected boolean runAllTasks(long timeoutNanos) {
+        //抓取任务
         fetchFromScheduledTaskQueue();
         Runnable task = pollTask();
         if (task == null) {
@@ -763,6 +767,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
         boolean inEventLoop = inEventLoop();
         addTask(task);
+        //如果EventLoop关联的线程没有启动，就初始化该线程
         if (!inEventLoop) {
             startThread();
             if (isShutdown() && removeTask(task)) {
@@ -879,8 +884,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 }
 
                 boolean success = false;
+                //记录最后执行的时间
                 updateLastExecutionTime();
                 try {
+                    //NioEventLoop重写了父类(当前类)SingleThreadEventExecutor的run方法，所有会调用NioEventLoop中的run方法
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {
