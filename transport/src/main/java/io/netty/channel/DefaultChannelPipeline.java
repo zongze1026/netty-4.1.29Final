@@ -214,9 +214,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
+            //检查需要添加的handler是否被添加过
             checkMultiplicity(handler);
 
-            //将handler封装成DefaultChannelHandlerContext对象添加到pipeline的链中
+
+            //1.首先会判断当前是否存在相同名称的handler通过filterName(name, handler)
+            //2.将handler封装成DefaultChannelHandlerContext对象添加到pipeline的链中
             newCtx = newContext(group, filterName(name, handler), handler);
 
             //添加到pipeline的双向链中，并且位置是倒数第二个节点
@@ -311,10 +314,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         ctx.prev = newCtx;
     }
 
+    //检查handler名称是否已经存在
     private String filterName(String name, ChannelHandler handler) {
+        //如果没有设置handler的名称，就生成一个直接返回
         if (name == null) {
             return generateName(handler);
         }
+        //如果设置了名称需要检查是否存在该名称的handler
         checkDuplicateName(name);
         return name;
     }
@@ -494,6 +500,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private AbstractChannelHandlerContext remove(final AbstractChannelHandlerContext ctx) {
+        //头尾节点不能删除
         assert ctx != head && ctx != tail;
 
         synchronized (this) {
@@ -502,7 +509,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             // If the registered is false it means that the channel was not registered on an eventloop yet.
             // In this case we remove the context from the pipeline and add a task that will call
             // ChannelHandler.handlerRemoved(...) once the channel is registered.
+            //如果该channel还没有被注册的话
             if (!registered) {
+                //添加一个handlerRemove的一个任务
                 callHandlerCallbackLater(ctx, false);
                 return ctx;
             }
@@ -518,10 +527,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 return ctx;
             }
         }
+        //执行删除回调
         callHandlerRemoved0(ctx);
         return ctx;
     }
 
+    //删除pipeline中的节点
     private static void remove0(AbstractChannelHandlerContext ctx) {
         AbstractChannelHandlerContext prev = ctx.prev;
         AbstractChannelHandlerContext next = ctx.next;
@@ -636,6 +647,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private static void checkMultiplicity(ChannelHandler handler) {
         if (handler instanceof ChannelHandlerAdapter) {
             ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;
+            //判断当前的handler是否是可共享的，如果是不可共享的需要
+            // 判断当前的handler有没有被添加过；如果被添加过就抛出异常
             if (!h.isSharable() && h.added) {
                 throw new ChannelPipelineException(
                         h.getClass().getName() +
@@ -775,6 +788,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             throw new NullPointerException("handler");
         }
 
+        //循环pipeline找出当前节点的context
         AbstractChannelHandlerContext ctx = head.next;
         for (;;) {
 
@@ -1113,12 +1127,14 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private void checkDuplicateName(String name) {
+        //返回不为空说明存在名称相同的handler，那么就抛出异常
         if (context0(name) != null) {
             throw new IllegalArgumentException("Duplicate handler name: " + name);
         }
     }
 
     private AbstractChannelHandlerContext context0(String name) {
+        //循环遍历pipeline中的所有结点，是否存在该名称的handler
         AbstractChannelHandlerContext context = head.next;
         while (context != tail) {
             if (context.name().equals(name)) {
@@ -1456,6 +1472,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             //通过该方法来传递事件
             ctx.fireChannelActive();
 
+            //为channel设置事件，服务端为accept、客户端为read事件；这些事件都是channel初始化时构造方法传入的事件
             readIfIsAutoRead();
         }
 

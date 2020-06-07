@@ -10,6 +10,6 @@ public class HttpChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
-        ch.pipeline().addLast(new HttpChannelHandler());
+        ch.pipeline().addLast(new NettyClientHandler());
     }
 }

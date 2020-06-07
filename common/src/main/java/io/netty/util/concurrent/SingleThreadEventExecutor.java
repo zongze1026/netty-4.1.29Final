@@ -273,13 +273,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private boolean fetchFromScheduledTaskQueue() {
         long nanoTime = AbstractScheduledEventExecutor.nanoTime();
         Runnable scheduledTask  = pollScheduledTask(nanoTime);
-        //在一定的时间内不断地从延时队列中抓取任务放到任务队列中;该循环结束的条件有两个：
-        //1.延时队列中没有任务  2.任务队列(taskQueue)中已满
+        //在一定的时间内不断地从定时队列中抓取任务放到任务队列中;该循环结束的条件有两个：
+        //1.定时队列中没有任务  2.任务队列(taskQueue)中已满
         while (scheduledTask != null) {
-            //把延时队列里的任务添加到执行队列(taskQueue)中
+            //把定时队列里的任务添加到执行队列(taskQueue)中
             if (!taskQueue.offer(scheduledTask)) {
                 // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
-                //如果任务队列中没有剩余空间，将其添加回延时队列，以便我们再次获取它
+                //如果任务队列中没有剩余空间，将其添加回定时队列，以便我们再次获取它
                 scheduledTaskQueue().add((ScheduledFutureTask<?>) scheduledTask);
                 return false;
             }
@@ -394,7 +394,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
      */
     protected boolean runAllTasks(long timeoutNanos) {
-        //抓取任务
+        //抓取定时任务队列(scheduledTaskQueue)中的任务到执行队列（taskQueue）
         fetchFromScheduledTaskQueue();
         //从任务队列里抓取要执行的任务
         Runnable task = pollTask();
@@ -413,6 +413,8 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
             // XXX: Hard-coded value - will make it configurable if it is really a problem.
+            //执行到64个任务后判断以下是否超时；由于ScheduledFutureTask.nanoTime()非常耗时，所以并
+            // 不是每执行一个任务判断一下
             if ((runTasks & 0x3F) == 0) {
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
                 if (lastExecutionTime >= deadline) {
@@ -439,6 +441,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     protected void afterRunningAllTasks() { }
     /**
      * Returns the amount of time left until the scheduled task with the closest dead line is executed.
+     *
+     * 1.在定时任务队列中，所有的任务会根据到期时间进行排序
+     * 2.该方法的作用就是用于计算第一个定时任务到期的时间
      */
     protected long delayNanos(long currentTimeNanos) {
         ScheduledFutureTask<?> scheduledTask = peekScheduledTask();

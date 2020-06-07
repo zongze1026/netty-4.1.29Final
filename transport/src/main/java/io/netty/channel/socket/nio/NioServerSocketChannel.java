@@ -88,7 +88,8 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
-        //保存创建的ServerSocketChannel，并且兴趣集是：SelectionKey.OP_ACCEPT
+        //保存创建的ServerSocketChannel，并且兴趣集是：SelectionKey.OP_ACCEPT=16
+        //该事件会在channel成功注册后绑定到selector上
         super(null, channel, SelectionKey.OP_ACCEPT);
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
@@ -150,13 +151,13 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      */
     @Override
     protected int doReadMessages(List<Object> buf) throws Exception {
-        //这里获取到的是客户端的channel（SocketChannel）
+        //处理的逻辑也比较简单，就是通过ServerSocketChannel调用accept方法来获取客户端的channel（SocketChannel）
         SocketChannel ch = SocketUtils.accept(javaChannel());
 
         try {
             if (ch != null) {
                 //针对nio的channel进行封装成NioSocketChannel返回
-                //这里的this就是NoiServerSocketChannel
+                //这里的this就是NoiServerSocketChannel;可以看到客户端channel的parent就是服务端处理accept的channel
                 buf.add(new NioSocketChannel(this, ch));
                 return 1;
             }

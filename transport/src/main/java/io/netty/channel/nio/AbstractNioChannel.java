@@ -415,6 +415,8 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     @Override
     protected void doBeginRead() throws Exception {
         // Channel.read() or ChannelHandlerContext.read() was called
+        //该方法的目的是我channel绑定事件，如果时服务端的channel就会绑定accept事件，如果是客户端的就会绑定read事件
+        //其中readInterestOp就是channel初始化时通过构造方法设置是指的事件参数
         final SelectionKey selectionKey = this.selectionKey;
         if (!selectionKey.isValid()) {
             return;

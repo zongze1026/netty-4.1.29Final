@@ -50,6 +50,7 @@ public class DefaultSocketChannelConfig extends DefaultChannelConfig
         this.javaSocket = javaSocket;
 
         // Enable TCP_NODELAY by default if possible.
+        //这里是禁用Delay算法，目的就是允许小的数据包也可以发送出去
         if (PlatformDependent.canEnableTcpNoDelayByDefault()) {
             try {
                 setTcpNoDelay(true);

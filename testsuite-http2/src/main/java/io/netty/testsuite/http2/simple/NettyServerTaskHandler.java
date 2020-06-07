@@ -25,34 +25,18 @@ public class NettyServerTaskHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf byteBuf = (ByteBuf) msg;
-        System.out.println("客户端发送的消息：" + byteBuf.toString(CharsetUtil.UTF_8));
-        //输出当前线程
-        System.out.println(Thread.currentThread().getName());
-        //需要进行业务处理，假设非常耗时的操作需要5秒钟，但是我们需要尽快回复客户端
-        //1.从上下文中获取到eventLoop，并提交一个任务到队列
-        ctx.channel().eventLoop().execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    ChannelHandlerContext ctx1 = ctx;
-                    //业务处理需要5秒
-                    Thread.sleep(5000);
-                    //输出当前线程，可以发现该线程和提交任务的线程是同一个线程
-                    System.out.println(Thread.currentThread().getName());
-                    ctx1.channel().writeAndFlush(Unpooled.copiedBuffer("任务处理完毕", Charset.defaultCharset()));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        //2.回复客户端
-        ctx.channel().writeAndFlush(Unpooled.copiedBuffer("任务已经提交", Charset.defaultCharset()));
+        System.out.println("客户端发送的消息：" + byteBuf.toString(Charset.defaultCharset()));
     }
 
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         System.out.println("channelHandler is add");
+    }
+
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
     }
 }
