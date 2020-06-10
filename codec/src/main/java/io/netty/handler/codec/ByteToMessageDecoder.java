@@ -137,6 +137,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
     private Cumulator cumulator = MERGE_CUMULATOR;
     private boolean singleDecode;
     private boolean decodeWasNull;
+    //代表是否是第一次解码
     private boolean first;
     /**
      * A bitmask where the bits are defined as
@@ -252,7 +253,9 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        //只能处理byteBuf类型的数据
         if (msg instanceof ByteBuf) {
+            //CodecOutputList实现了abstractList;可以简单看做一个list
             CodecOutputList out = CodecOutputList.newInstance();
             try {
                 ByteBuf data = (ByteBuf) msg;
@@ -409,6 +412,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
             while (in.isReadable()) {
                 int outSize = out.size();
 
+                //如果集合里面有数据就传递fireChannelRead事件，并清空集合
                 if (outSize > 0) {
                     fireChannelRead(ctx, out, outSize);
                     out.clear();

@@ -1,4 +1,4 @@
-package io.netty.testsuite.http2.simple;
+package io.netty.example.myExample.simple;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

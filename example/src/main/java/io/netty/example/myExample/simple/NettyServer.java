@@ -1,4 +1,4 @@
-package io.netty.testsuite.http2.simple;
+package io.netty.example.myExample.simple;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;

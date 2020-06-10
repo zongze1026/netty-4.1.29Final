@@ -1,10 +1,8 @@
-package io.netty.testsuite.http2.simple;
+package io.netty.example.myExample.simple;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.util.CharsetUtil;
 
 import java.nio.charset.Charset;
 

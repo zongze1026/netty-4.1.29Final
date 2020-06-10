@@ -1,4 +1,4 @@
-package io.netty.testsuite.http2.simple;
+package io.netty.example.myExample.simple;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
