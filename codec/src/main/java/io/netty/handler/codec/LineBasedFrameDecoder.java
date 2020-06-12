@@ -30,14 +30,14 @@ import java.util.List;
 public class LineBasedFrameDecoder extends ByteToMessageDecoder {
 
     /** Maximum length of a frame we're willing to decode.  */
-    private final int maxLength;
+    private final int maxLength; //行最大长度
     /** Whether or not to throw an exception as soon as we exceed maxLength. */
-    private final boolean failFast;
-    private final boolean stripDelimiter;
+    private final boolean failFast; //是否立即抛出异常
+    private final boolean stripDelimiter; //是否跳过分隔符
 
     /** True if we're discarding input because we're already over maxLength.  */
-    private boolean discarding;
-    private int discardedBytes;
+    private boolean discarding; //如果超过最大长度，是否抛弃字节数据
+    private int discardedBytes; //记录抛弃的字节数量
 
     /** Last scan position. */
     private int offset;
@@ -66,6 +66,10 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
      *                  If <tt>false</tt>, a {@link TooLongFrameException} is
      *                  thrown after the entire frame that exceeds
      *                  <tt>maxFrameLength</tt> has been read.
+     *
+     * @param maxLength 表示一行可以允许最大的字节数
+     * @param stripDelimiter 该参数表示是否跳过分割符，默认为true
+     * @param failFast 是否立即抛出异常；如果为true立即抛出异常，否则读取完毕抛出异常；默认false
      */
     public LineBasedFrameDecoder(final int maxLength, final boolean stripDelimiter, final boolean failFast) {
         this.maxLength = maxLength;
@@ -97,14 +101,18 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
                 final int length = eol - buffer.readerIndex();
                 final int delimLength = buffer.getByte(eol) == '\r'? 2 : 1;
 
+                //大于行最大数抛出异常
                 if (length > maxLength) {
+                    //设置readerIndex
                     buffer.readerIndex(eol + delimLength);
                     fail(ctx, length);
                     return null;
                 }
 
                 if (stripDelimiter) {
+                    //读取byteBuf数据
                     frame = buffer.readRetainedSlice(length);
+                    //跳过分隔符
                     buffer.skipBytes(delimLength);
                 } else {
                     frame = buffer.readRetainedSlice(length + delimLength);
@@ -112,9 +120,11 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
 
                 return frame;
             } else {
+                //如果eol返回的是-1,那么说明超过了行最大的字节数量
                 final int length = buffer.readableBytes();
                 if (length > maxLength) {
                     discardedBytes = length;
+                    //这里直接设置readIndex为该buffer的writerIndex；抛弃writerIndex之前的数据
                     buffer.readerIndex(buffer.writerIndex());
                     discarding = true;
                     offset = 0;
@@ -155,6 +165,8 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
     /**
      * Returns the index in the buffer of the end of line found.
      * Returns -1 if no end of line was found in the buffer.
+     *
+     * 寻找分隔符，如果没有找到分隔符返回-1
      */
     private int findEndOfLine(final ByteBuf buffer) {
         int totalLength = buffer.readableBytes();

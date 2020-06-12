@@ -522,6 +522,8 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      * to {@code 0} and {@code oldWriterIndex - oldReaderIndex} respectively.
      * <p>
      * Please refer to the class documentation for more detailed explanation.
+     *
+     * 丢弃0到readerIndex之间的字节
      */
     public abstract ByteBuf discardReadBytes();
 
