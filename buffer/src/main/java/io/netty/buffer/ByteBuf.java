@@ -1615,6 +1615,10 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      * This method behaves similarly to {@code readSlice(...).retain()} except that this method may return
      * a buffer implementation that produces less garbage.
      *
+     *  返回一个新的byteBuf；该buffer是属于当前byteBuf的一部分；同时增加当前ByteBuf的readIndex，增加的
+     *  数值等于新的byteBuf的长度;如果{@param length}大于当前byteBuf的readIndex的话会抛出异常；
+     *  @throws IndexOutOfBoundsException
+     *
      * @param length the size of the new slice
      *
      * @return the newly created slice
