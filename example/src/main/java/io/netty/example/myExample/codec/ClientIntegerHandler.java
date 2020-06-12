@@ -14,6 +14,9 @@ public class ClientIntegerHandler extends SimpleChannelInboundHandler<Integer> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        ctx.channel().writeAndFlush(25);
+        for (int i=0;i<10;i++){
+            ctx.channel().writeAndFlush(252532541);
+            Thread.sleep(1000);
+        }
     }
 }

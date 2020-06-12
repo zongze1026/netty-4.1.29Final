@@ -16,7 +16,6 @@ public class MyByteToIntegerDecoder extends ByteToMessageDecoder {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         //1.一个int等于4个字节，所以需要判断ByteBuf是否有足够的字节可读
         //2.从ByteBuf中读取的数据添加到List<Object> out集合中，它会传递到下一个channelHandler
-        System.out.println("integer解码器被调用");
         if (in.readableBytes() >= 4) {
             out.add(in.readInt());
         }

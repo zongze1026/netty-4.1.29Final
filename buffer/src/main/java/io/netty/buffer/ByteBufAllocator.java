@@ -18,6 +18,7 @@ package io.netty.buffer;
 /**
  * Implementations are responsible to allocate buffers. Implementations of this interface are expected to be
  * thread-safe.
+ * 该方法的实现子类负责分配buffer,同时这些子类的实现都是线程安全的操作
  */
 public interface ByteBufAllocator {
 
@@ -26,12 +27,14 @@ public interface ByteBufAllocator {
     /**
      * Allocate a {@link ByteBuf}. If it is a direct or heap buffer
      * depends on the actual implementation.
+     * 分配一个{@link ByteBuf},分配出来的buffer是heap还是direct类型的都是依赖子类的实现
      */
     ByteBuf buffer();
 
     /**
      * Allocate a {@link ByteBuf} with the given initial capacity.
      * If it is a direct or heap buffer depends on the actual implementation.
+     * 分配一个带容量{@link ByteBuf},分配出来的buffer是heap还是direct类型的都是依赖子类的实现
      */
     ByteBuf buffer(int initialCapacity);
 
@@ -39,21 +42,25 @@ public interface ByteBufAllocator {
      * Allocate a {@link ByteBuf} with the given initial capacity and the given
      * maximal capacity. If it is a direct or heap buffer depends on the actual
      * implementation.
+     * 分配一个带容量和最大容量{@link ByteBuf},分配出来的buffer是heap还是direct类型的都是依赖子类的实现
      */
     ByteBuf buffer(int initialCapacity, int maxCapacity);
 
     /**
      * Allocate a {@link ByteBuf}, preferably a direct buffer which is suitable for I/O.
+     * 分配一个{@link ByteBuf}，希望分配direct类型的buffer
      */
     ByteBuf ioBuffer();
 
     /**
      * Allocate a {@link ByteBuf}, preferably a direct buffer which is suitable for I/O.
+     * 分配一个带初始化大小的{@link ByteBuf}，希望分配direct类型的buffer
      */
     ByteBuf ioBuffer(int initialCapacity);
 
     /**
      * Allocate a {@link ByteBuf}, preferably a direct buffer which is suitable for I/O.
+     * 分配一个带初始容量和最大容量的{@link ByteBuf}，希望分配direct类型的buffer
      */
     ByteBuf ioBuffer(int initialCapacity, int maxCapacity);
 
