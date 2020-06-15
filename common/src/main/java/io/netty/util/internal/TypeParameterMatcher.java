@@ -38,10 +38,12 @@ public abstract class TypeParameterMatcher {
                 InternalThreadLocalMap.get().typeParameterMatcherGetCache();
 
         TypeParameterMatcher matcher = getCache.get(parameterType);
+        //实例化类型匹配器
         if (matcher == null) {
             if (parameterType == Object.class) {
                 matcher = NOOP;
             } else {
+                //直接返回一个反射类型的匹配器
                 matcher = new ReflectiveMatcher(parameterType);
             }
             getCache.put(parameterType, matcher);
@@ -54,17 +56,23 @@ public abstract class TypeParameterMatcher {
             final Object object, final Class<?> parametrizedSuperclass, final String typeParamName) {
 
         final Map<Class<?>, Map<String, TypeParameterMatcher>> findCache =
+                //从ThreadLocal中获取出类型参数匹配（typeParameterMatcher）的那部分缓存
                 InternalThreadLocalMap.get().typeParameterMatcherFindCache();
         final Class<?> thisClass = object.getClass();
 
+        //获取当前class所对应的缓存
         Map<String, TypeParameterMatcher> map = findCache.get(thisClass);
+        //如果为空的话就初始化一个map并放入；第一次肯定为空
         if (map == null) {
             map = new HashMap<String, TypeParameterMatcher>();
             findCache.put(thisClass, map);
         }
 
+        //1.由之前可以看到typeParamName始终是固定的字符串"I"
+        //2.通过typeParamName获取类型匹配器；第一次肯定为空
         TypeParameterMatcher matcher = map.get(typeParamName);
         if (matcher == null) {
+            //初始化类型匹配器
             matcher = get(find0(object, parametrizedSuperclass, typeParamName));
             map.put(typeParamName, matcher);
         }
