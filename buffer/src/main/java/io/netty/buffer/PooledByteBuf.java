@@ -33,6 +33,7 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
     protected int length;
     int maxLength;
     PoolThreadCache cache;
+    //临时的ByteBuffer
     private ByteBuffer tmpNioBuf;
     private ByteBufAllocator allocator;
 
@@ -151,7 +152,9 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
     }
 
     protected final ByteBuffer internalNioBuffer() {
+        //获取临时的ByteBuffer
         ByteBuffer tmpNioBuf = this.tmpNioBuf;
+        //如果不存在就创建一个ByteBuffer
         if (tmpNioBuf == null) {
             this.tmpNioBuf = tmpNioBuf = newInternalNioBuffer(memory);
         }

@@ -30,7 +30,9 @@ package io.netty.channel;
  */
 public final class WriteBufferWaterMark {
 
+    //缓冲区最小值32K
     private static final int DEFAULT_LOW_WATER_MARK = 32 * 1024;
+    //缓冲区最大值64K
     private static final int DEFAULT_HIGH_WATER_MARK = 64 * 1024;
 
     public static final WriteBufferWaterMark DEFAULT =
@@ -51,6 +53,7 @@ public final class WriteBufferWaterMark {
 
     /**
      * This constructor is needed to keep backward-compatibility.
+     * 设置写入socket之前缓冲区的最小值（low）和最大值(high)
      */
     WriteBufferWaterMark(int low, int high, boolean validate) {
         if (validate) {

@@ -372,7 +372,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         }
 
         private boolean isFlushPending() {
+            //取到当前channel的selectionKey
             SelectionKey selectionKey = selectionKey();
+            //判断当前key是否是合法的;并且write事件就绪
             return selectionKey.isValid() && (selectionKey.interestOps() & SelectionKey.OP_WRITE) != 0;
         }
     }

@@ -905,6 +905,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            //缓存byteBuf数据包到outboundBuffer中；等待被flush
             outboundBuffer.addMessage(msg, size, promise);
         }
 
@@ -933,9 +934,11 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            //设置inFlush状态
             inFlush0 = true;
 
             // Mark all pending write requests as failure if the channel is inactive.
+            //确保当前NioSocketChannel是可写数据的状态
             if (!isActive()) {
                 try {
                     if (isOpen()) {
