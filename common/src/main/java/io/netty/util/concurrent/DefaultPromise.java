@@ -99,6 +99,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
 
     @Override
     public boolean trySuccess(V result) {
+        //在设置执行结果，并通知监听器
         if (setSuccess0(result)) {
             notifyListeners();
             return true;
@@ -517,6 +518,11 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
     }
 
     private void addListener0(GenericFutureListener<? extends Future<? super V>> listener) {
+        //1.listeners是一个object的变量
+        //2.如果只有一个监听器的话直接通过listeners来接收
+        //3.如果存在多个监听器的话会创建一个DefaultFutureListeners（内部维护了一个监听器数组）来接收
+        //4.有下面的流程可以知道，第一次创建直接通过Object来接收；添加第二个监听器的时候会创建一个DefaultFutureListeners，并把
+        //第一个监听器也加入到数组中；此时如果还有监听器加入是直接调用DefaultFutureListeners执行add加入到数组中
         if (listeners == null) {
             listeners = listener;
         } else if (listeners instanceof DefaultFutureListeners) {
