@@ -67,6 +67,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
 
     public static InternalThreadLocalMap get() {
         Thread thread = Thread.currentThread();
+        //如果当前线程是netty内部自定义的线程就执行fastGet
         if (thread instanceof FastThreadLocalThread) {
             return fastGet((FastThreadLocalThread) thread);
         } else {
@@ -76,6 +77,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
 
     private static InternalThreadLocalMap fastGet(FastThreadLocalThread thread) {
         InternalThreadLocalMap threadLocalMap = thread.threadLocalMap();
+        //threadLocalMap没有被初始化的话会先初始化它
         if (threadLocalMap == null) {
             thread.setThreadLocalMap(threadLocalMap = new InternalThreadLocalMap());
         }
@@ -106,6 +108,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
     }
 
     public static int nextVariableIndex() {
+        //通过integer的原子类来创建index
         int index = nextIndex.getAndIncrement();
         if (index < 0) {
             nextIndex.decrementAndGet();
@@ -126,8 +129,10 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         super(newIndexedVariableTable());
     }
 
+    //创建了一个大小为32的object数组，并使用同一个object对象填充数组
     private static Object[] newIndexedVariableTable() {
         Object[] array = new Object[32];
+        //使用object对象填充数组
         Arrays.fill(array, UNSET);
         return array;
     }
@@ -292,11 +297,13 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
      */
     public boolean setIndexedVariable(int index, Object value) {
         Object[] lookup = indexedVariables;
+        //判断index是否超出数组长度；如果超出数组长度需要扩容
         if (index < lookup.length) {
             Object oldValue = lookup[index];
             lookup[index] = value;
             return oldValue == UNSET;
         } else {
+            //扩容object数组
             expandIndexedVariableTableAndSet(index, value);
             return true;
         }
@@ -313,9 +320,13 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         newCapacity |= newCapacity >>> 16;
         newCapacity ++;
 
+        //创建一个新的object数组
         Object[] newArray = Arrays.copyOf(oldArray, newCapacity);
+        //拷贝old数组中的元素到新的数组中
         Arrays.fill(newArray, oldCapacity, newArray.length, UNSET);
+        //设置当前index的值
         newArray[index] = value;
+        //让indexedVariables指向新创建的数组
         indexedVariables = newArray;
     }
 

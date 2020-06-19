@@ -56,6 +56,8 @@ class UnpaddedInternalThreadLocalMap {
     ArrayList<Object> arrayList;
 
     UnpaddedInternalThreadLocalMap(Object[] indexedVariables) {
+        //1.indexedVariables是真正用于存储的容器
+        //2.由前面可知该容器就是初始化大小为32的object数组
         this.indexedVariables = indexedVariables;
     }
 }

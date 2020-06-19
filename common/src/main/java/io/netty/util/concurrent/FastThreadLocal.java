@@ -122,9 +122,11 @@ public class FastThreadLocal<V> {
         variablesToRemove.remove(variable);
     }
 
+    //通过该index获取ThreadLocalMap中Object[]中的元素
     private final int index;
 
     public FastThreadLocal() {
+        //在创建fastTreadLocal是会初始化index
         index = InternalThreadLocalMap.nextVariableIndex();
     }
 
@@ -263,6 +265,7 @@ public class FastThreadLocal<V> {
             return;
         }
 
+        //删除元素，实际上就是将对应的index值替换成初始化好的object对象
         Object v = threadLocalMap.removeIndexedVariable(index);
         removeFromVariablesToRemove(threadLocalMap, this);
 

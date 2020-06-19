@@ -105,6 +105,8 @@ public class DefaultThreadFactory implements ThreadFactory {
 
     @Override
     public Thread newThread(Runnable r) {
+        //1.netty中的线程是自己封装出来的线程FastThreadLocalThread以及FastThreadLocal也是自己封装出来的
+        //2.创建一个fastThreadLocalThread
         Thread t = newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet());
         try {
             if (t.isDaemon() != daemon) {
