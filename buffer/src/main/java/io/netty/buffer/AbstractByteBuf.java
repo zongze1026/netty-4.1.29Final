@@ -1271,12 +1271,15 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     private int forEachByteAsc0(int start, int end, ByteProcessor processor) throws Exception {
         for (; start < end; ++start) {
+            //1.循环处理每一个字节；并将解析出来的数据添加到字符缓冲区中
+            //2.如果遇到回车符的话就跳过，不添加到字符缓冲区中
+            //3.如果遇到换行符的话，就结束解析，表明解析完成
             if (!processor.process(_getByte(start))) {
                 return start;
             }
         }
 
-        return -1;
+        return -1; //解析异常返回-1
     }
 
     @Override

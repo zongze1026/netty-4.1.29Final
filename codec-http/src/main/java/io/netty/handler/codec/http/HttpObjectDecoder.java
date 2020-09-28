@@ -797,7 +797,7 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
     }
 
     private static class HeaderParser implements ByteProcessor {
-        private final AppendableCharSequence seq;
+        private final AppendableCharSequence seq; //字符缓冲区
         private final int maxLength;
         private int size;
 
@@ -807,7 +807,7 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
         }
 
         public AppendableCharSequence parse(ByteBuf buffer) {
-            final int oldSize = size;
+            final int oldSize = size; //
             seq.reset();
             int i = buffer.forEachByte(this);
             if (i == -1) {
@@ -824,10 +824,12 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
 
         @Override
         public boolean process(byte value) throws Exception {
-            char nextByte = (char) (value & 0xFF);
+            char nextByte = (char) (value & 0xFF); //将字节转换成字符
+            //如果时回车符的话就跳过
             if (nextByte == HttpConstants.CR) {
                 return true;
             }
+            //如果时回车符的话就跳过
             if (nextByte == HttpConstants.LF) {
                 return false;
             }
@@ -840,7 +842,7 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
                 throw newException(maxLength);
             }
 
-            seq.append(nextByte);
+            seq.append(nextByte); //添加到字符缓冲区中
             return true;
         }
 
