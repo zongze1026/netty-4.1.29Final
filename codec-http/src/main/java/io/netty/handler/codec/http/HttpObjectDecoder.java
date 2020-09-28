@@ -573,7 +573,8 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
         //取到buffer中所有的字节进行判断是否是控制符或者空白行
         while (wIdx > rIdx) {
             int c = buffer.getUnsignedByte(rIdx++);
-            //如果取到的字节既不是控制符也不是空白行；则返回ture,并跳过控制符
+            //1.如果取到的字节既不是控制符也不是空白行；则返回ture,并跳过控制符
+            //2.如果遍历了buffer中所有的字节都没有找到可读的数据，直接返回false
             if (!Character.isISOControl(c) && !Character.isWhitespace(c)) {
                 rIdx--;  //这里需要减减操作，将跳过的一个字节数据加上去
                 skiped = true;
