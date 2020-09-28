@@ -124,17 +124,17 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
      * <em>Internal use only</em>.
      */
     private enum State {
-        SKIP_CONTROL_CHARS,
-        READ_INITIAL,
-        READ_HEADER,
-        READ_VARIABLE_LENGTH_CONTENT,
-        READ_FIXED_LENGTH_CONTENT,
-        READ_CHUNK_SIZE,
-        READ_CHUNKED_CONTENT,
-        READ_CHUNK_DELIMITER,
-        READ_CHUNK_FOOTER,
-        BAD_MESSAGE,
-        UPGRADED
+        SKIP_CONTROL_CHARS,  //跳过控制符
+        READ_INITIAL,  //开始读取
+        READ_HEADER,  //读取请求头
+        READ_VARIABLE_LENGTH_CONTENT,  //读取可变长内容，用于chunk传输
+        READ_FIXED_LENGTH_CONTENT,  //读取固定长内容 用于Content-Length
+        READ_CHUNK_SIZE,  //chunk传输的每个chunk尺寸
+        READ_CHUNKED_CONTENT,  //每个chunk内容
+        READ_CHUNK_DELIMITER,  //chunk分割
+        READ_CHUNK_FOOTER,  //最后一个chunk
+        BAD_MESSAGE,  //无效消息
+        UPGRADED  //协议切换
     }
 
     private State currentState = State.SKIP_CONTROL_CHARS;
@@ -199,9 +199,11 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
 
         switch (currentState) {
         case SKIP_CONTROL_CHARS: {
+            //跳过控制符;如果没有读到数据直接return结束
             if (!skipControlCharacters(buffer)) {
                 return;
             }
+            //设置当前转态为开始读取状态
             currentState = State.READ_INITIAL;
         }
         case READ_INITIAL: try {
@@ -558,19 +560,27 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
         return chunk;
     }
 
+    /**
+     * 该方法有两种情况：
+     * 1.跳过开始的控制符并返回true
+     * 2.没有找到相关的控制符，则认为没有找到数据包，返回false
+     * @param buffer
+     */
     private static boolean skipControlCharacters(ByteBuf buffer) {
         boolean skiped = false;
         final int wIdx = buffer.writerIndex();
         int rIdx = buffer.readerIndex();
+        //取到buffer中所有的字节进行判断是否是控制符或者空白行
         while (wIdx > rIdx) {
             int c = buffer.getUnsignedByte(rIdx++);
+            //如果取到的字节既不是控制符也不是空白行；则返回ture,并跳过控制符
             if (!Character.isISOControl(c) && !Character.isWhitespace(c)) {
-                rIdx--;
+                rIdx--;  //这里需要减减操作，将跳过的一个字节数据加上去
                 skiped = true;
                 break;
             }
         }
-        buffer.readerIndex(rIdx);
+        buffer.readerIndex(rIdx); //设置buffer的读索引；这里已经是跳过了控制符
         return skiped;
     }
 
