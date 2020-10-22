@@ -87,12 +87,17 @@ import static io.netty.handler.codec.http.HttpUtil.getContentLength;
 public class HttpObjectAggregator
         extends MessageAggregator<HttpObject, HttpMessage, HttpContent, FullHttpMessage> {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(HttpObjectAggregator.class);
+    //以下是定义响应状态码
+    //接受100-continue，响应状态码100
     private static final FullHttpResponse CONTINUE =
             new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);
+    //不接受，响应状态码417 不支持
     private static final FullHttpResponse EXPECTATION_FAILED = new DefaultFullHttpResponse(
             HttpVersion.HTTP_1_1, HttpResponseStatus.EXPECTATION_FAILED, Unpooled.EMPTY_BUFFER);
+    //不接受，响应状态码413 消息体太大而关闭连接
     private static final FullHttpResponse TOO_LARGE_CLOSE = new DefaultFullHttpResponse(
             HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, Unpooled.EMPTY_BUFFER);
+    //不接受，响应状态码413 消息体太大，没关闭连接
     private static final FullHttpResponse TOO_LARGE = new DefaultFullHttpResponse(
         HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, Unpooled.EMPTY_BUFFER);
 

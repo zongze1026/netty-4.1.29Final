@@ -211,14 +211,19 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
             if (line == null) {
                 return;
             }
+            //请求行的数据格式；空格分离成三部分：POST /index/index.html HTTP/1.1
+            //根据空格切割请求行
             String[] initialLine = splitInitialLine(line);
+            //如果切割数组的长度小于3就认为是无效的请求行
             if (initialLine.length < 3) {
                 // Invalid initial line - ignore.
                 currentState = State.SKIP_CONTROL_CHARS;
                 return;
             }
 
+            //封装请求行数据成httpMessage;默认实现DefaultHttpRequest
             message = createMessage(initialLine);
+            //设置状态成读取请求头
             currentState = State.READ_HEADER;
             // fall-through
         } catch (Exception e) {
@@ -226,6 +231,7 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
             return;
         }
         case READ_HEADER: try {
+            //读取请求头并封装到httpMessage中
             State nextState = readHeaders(buffer);
             if (nextState == null) {
                 return;
@@ -596,6 +602,7 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
         if (line.length() > 0) {
             do {
                 char firstChar = line.charAt(0);
+                //非正常情况
                 if (name != null && (firstChar == ' ' || firstChar == '\t')) {
                     //please do not make one line from below code
                     //as it breaks +XX:OptimizeStringConcat optimization
@@ -603,6 +610,7 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
                     String valueStr = String.valueOf(value);
                     value = valueStr + ' ' + trimmedLine;
                 } else {
+                    //第一次name为null;当调用splitHeader方法时为name和value赋值
                     if (name != null) {
                         headers.add(name, value);
                     }
@@ -610,6 +618,8 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
                 }
 
                 line = headerParser.parse(buffer);
+                //根据循环的逻辑可以知道，最后一个请求头还没有被添加到headers中
+                //最终会在循环外部添加
                 if (line == null) {
                     return null;
                 }
@@ -617,6 +627,7 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
         }
 
         // Add the last header.
+        //添加最后一个请求头键值对
         if (name != null) {
             headers.add(name, value);
         }
@@ -629,8 +640,10 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
         if (isContentAlwaysEmpty(message)) {
             HttpUtil.setTransferEncodingChunked(message, false);
             nextState = State.SKIP_CONTROL_CHARS;
+            //查询请求头中是否有transfer-encoding属性；有的话说明是chunk传输
         } else if (HttpUtil.isTransferEncodingChunked(message)) {
             nextState = State.READ_CHUNK_SIZE;
+            //从请求头中读取content-length属性；如果获取到长度就读固定长度
         } else if (contentLength() >= 0) {
             nextState = State.READ_FIXED_LENGTH_CONTENT;
         } else {
@@ -808,13 +821,14 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
 
         public AppendableCharSequence parse(ByteBuf buffer) {
             final int oldSize = size; //
-            seq.reset();
+            seq.reset(); //重置字符缓冲区
+            //循环解析数据并添加到字符缓冲区中
             int i = buffer.forEachByte(this);
             if (i == -1) {
                 size = oldSize;
                 return null;
             }
-            buffer.readerIndex(i + 1);
+            buffer.readerIndex(i + 1); //设置读索引
             return seq;
         }
 
@@ -825,11 +839,11 @@ public abstract class HttpObjectDecoder extends ByteToMessageDecoder {
         @Override
         public boolean process(byte value) throws Exception {
             char nextByte = (char) (value & 0xFF); //将字节转换成字符
-            //如果时回车符的话就跳过
+            //如果是回车符的话就跳过
             if (nextByte == HttpConstants.CR) {
                 return true;
             }
-            //如果时回车符的话就跳过
+            //如果是换行符号的话就结束解析
             if (nextByte == HttpConstants.LF) {
                 return false;
             }

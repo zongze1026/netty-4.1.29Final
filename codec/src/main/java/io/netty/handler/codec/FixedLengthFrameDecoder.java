@@ -35,10 +35,15 @@ import java.util.List;
  * | ABC | DEF | GHI |
  * +-----+-----+-----+
  * </pre>
+ *
+ * FixedLengthFrameDecoder是固定长度解码器；通过指定消息的长度，根据指定的消息长度将二进制
+ * 数据流解析成-个个完整的数据包；对于定长的消息如果长度不足会进行补位，这势必会造成资源的浪费。
+ * 但是该解码器的优点是解码比较简单
+ *
  */
 public class FixedLengthFrameDecoder extends ByteToMessageDecoder {
 
-    private final int frameLength;
+    private final int frameLength;  //消息长度
 
     /**
      * Creates a new instance.
@@ -71,6 +76,7 @@ public class FixedLengthFrameDecoder extends ByteToMessageDecoder {
      */
     protected Object decode(
             @SuppressWarnings("UnusedParameters") ChannelHandlerContext ctx, ByteBuf in) throws Exception {
+        //如果长度没有到达指定的解码长度直接返回null
         if (in.readableBytes() < frameLength) {
             return null;
         } else {

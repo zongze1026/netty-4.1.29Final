@@ -26,6 +26,7 @@ import java.util.List;
  * <p>
  * Both {@code "\n"} and {@code "\r\n"} are handled.
  * For a more general delimiter-based decoder, see {@link DelimiterBasedFrameDecoder}.
+ * 回车换行解码器；它是以回车或者换行来作为消息结束的标识的解码器
  */
 public class LineBasedFrameDecoder extends ByteToMessageDecoder {
 
@@ -94,57 +95,73 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
      *                          be created.
      */
     protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
+        //找出换行符的位置
         final int eol = findEndOfLine(buffer);
+        //判断如果discarding为false进入if判断；也就是非丢弃模式
         if (!discarding) {
+            //如果已经找到了换行符的位置
             if (eol >= 0) {
                 final ByteBuf frame;
+                //通过换行符的位置减去readerIndex计算出这次消息的长度
                 final int length = eol - buffer.readerIndex();
+                //计算出换行符的长度；如果是\n则长度1；如果是\r\n长度是2
                 final int delimLength = buffer.getByte(eol) == '\r'? 2 : 1;
 
-                //大于行最大数抛出异常
+                //消息长度大于最大长度的话就会丢弃本次消息；maxLength通过构造方法传入设置
                 if (length > maxLength) {
-                    //设置readerIndex
+                    //通过设置byteBuf的读索引来丢弃当前读取的消息字节
                     buffer.readerIndex(eol + delimLength);
                     fail(ctx, length);
                     return null;
                 }
 
                 if (stripDelimiter) {
-                    //读取byteBuf数据
+                    //读取byteBuf数据，不包含换行符
                     frame = buffer.readRetainedSlice(length);
-                    //跳过分隔符
+                    //跳过换行符
                     buffer.skipBytes(delimLength);
                 } else {
+                    //读取包含换行符的数据
                     frame = buffer.readRetainedSlice(length + delimLength);
                 }
 
                 return frame;
             } else {
-                //如果eol返回的是-1,那么说明超过了行最大的字节数量
+                //如果eol返回的是-1,没有找到换行符
                 final int length = buffer.readableBytes();
+                //如果byteBuf中的长度大于消息最大长度
                 if (length > maxLength) {
                     discardedBytes = length;
                     //这里直接设置readIndex为该buffer的writerIndex；抛弃writerIndex之前的数据
                     buffer.readerIndex(buffer.writerIndex());
+                    //标记为丢弃模式
                     discarding = true;
                     offset = 0;
                     if (failFast) {
                         fail(ctx, "over " + discardedBytes);
                     }
                 }
+                //如果没有超过消息最大长度，返回null
                 return null;
             }
+            //如果是丢弃模式进入else判断
         } else {
+            //找到分隔符
             if (eol >= 0) {
+                //记录丢弃的字节；discardedBytes(前面已经丢弃的字节)+当前丢弃的字节(eol - buffer.readerIndex())
                 final int length = discardedBytes + eol - buffer.readerIndex();
+                //计算换行符的长度
                 final int delimLength = buffer.getByte(eol) == '\r'? 2 : 1;
+                //丢弃字节
                 buffer.readerIndex(eol + delimLength);
                 discardedBytes = 0;
+                //设置discarding为非丢弃模式
                 discarding = false;
                 if (!failFast) {
                     fail(ctx, length);
                 }
             } else {
+                //如果没有找到换行符；直接丢弃当前byteBuf中所有的数据
                 discardedBytes += buffer.readableBytes();
                 buffer.readerIndex(buffer.writerIndex());
             }
@@ -166,13 +183,15 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
      * Returns the index in the buffer of the end of line found.
      * Returns -1 if no end of line was found in the buffer.
      *
-     * 寻找分隔符，如果没有找到分隔符返回-1
+     * 寻找分隔符\n，如果没有找到分隔符返回-1
      */
     private int findEndOfLine(final ByteBuf buffer) {
         int totalLength = buffer.readableBytes();
+        //遍历byteBuf寻找\n分割符所在的位置
         int i = buffer.forEachByte(buffer.readerIndex() + offset, totalLength - offset, ByteProcessor.FIND_LF);
         if (i >= 0) {
             offset = 0;
+            //找到\n分隔符后，需要判断一下是否是\r\n的分隔符；判断方法就是取到前一个字节判断是否是\r
             if (i > 0 && buffer.getByte(i - 1) == '\r') {
                 i--;
             }
